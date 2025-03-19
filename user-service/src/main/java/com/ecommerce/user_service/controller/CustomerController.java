@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ecommerce.user_service.dto.CustomerDTO;
@@ -34,9 +35,14 @@ public class CustomerController {
         return ResponseEntity.ok(userService.getUserById(id));
     }
 
-    @PostMapping
-    public ResponseEntity<CustomerDTO> createUser(@RequestBody CustomerDTO user) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(user));
+    @PostMapping("/register")
+    public ResponseEntity<CustomerDTO> registerUser(@RequestBody CustomerDTO user) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(userService.registerUser(user));
+    }
+    
+    @PostMapping("/login")
+    public ResponseEntity<CustomerDTO> login(@RequestParam String email, @RequestParam String password) {
+        return ResponseEntity.ok(userService.login(email, password));
     }
 
     @PutMapping("/{id}")

@@ -1,5 +1,6 @@
 package com.ecommerce.user_service.service;
 
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -14,7 +15,7 @@ import com.ecommerce.user_service.model.Customer;
 import com.ecommerce.user_service.repository.CustomerRepository;
 
 @Service
-public class CustomerService {
+public class CustomerService implements ICustomerService{
 
     @Autowired
     private CustomerRepository userRepository;
@@ -38,8 +39,31 @@ public class CustomerService {
         		.map(customerMapper::toDTO)
                 .orElseThrow(() -> new CustomerNotFoundException("User not found with id: " + id));
     }
+    
+    public CustomerDTO getUserByUsername(String username) {
+        return userRepository.findByUsername(username)
+        		.map(customerMapper::toDTO)
+                .orElseThrow(() -> new CustomerNotFoundException("User not found with username: " + username));
+    }
+    
+    public CustomerDTO getUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+        		.map(customerMapper::toDTO)
+                .orElseThrow(() -> new CustomerNotFoundException("User not found with email: " + email));
+    }
+    
+    public List<CustomerDTO> getUserCreatedBetweenTwoDates(Date date1, Date date2) {
+    	List<CustomerDTO> listCustomers = userRepository.findCustomersCreatedBetweenTwoDates(date1,date2).stream()
+                .map(customerMapper::toDTO)
+                .collect(Collectors.toList());
+    	
+    	if (listCustomers.isEmpty()) {
+            throw new CustomerNotFoundException("No customers found");
+        }
+        return listCustomers;
+    }
 
-    public CustomerDTO createUser(CustomerDTO userDTO) {
+    public CustomerDTO registerUser(CustomerDTO userDTO) {
     	userRepository.findAll().stream()
 	        .filter(existingUser -> existingUser.getEmail().equals(userDTO.email()))
 	        .findAny()
@@ -47,9 +71,21 @@ public class CustomerService {
 	            throw new CustomerAlreadyExistingException("User already exists with username: " + userDTO.username());
 	        });
     	
+    	
     	Customer customer = customerMapper.toEntity(userDTO);
+    	customer.setCreatedAt(new Date());
     	
         return customerMapper.toDTO(userRepository.save(customer));
+    }
+    
+    public CustomerDTO login(String email, String password) {
+        CustomerDTO result = userRepository.findByEmail(email).stream()
+        	.filter(existingUser -> existingUser.getPassword().equals(password))
+        	.findFirst()
+        	.map(customerMapper::toDTO)
+        	.orElseThrow(() -> new CustomerNotFoundException("User not found with these credentials"));
+        
+        return result;
     }
 
     public CustomerDTO updateUser(Long id, CustomerDTO userDetails) {
